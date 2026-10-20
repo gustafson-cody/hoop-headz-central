@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HOOP HEADZ CENTRAL | Ultimate NBA Intelligence Hub</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            nba: {
+              navy: '#1D428A',
+              red: '#C8102E',
+              dark: '#0A0F1D',
+              card: '#131B2E',
+              border: '#1E293B',
+              accent: '#F59E0B'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+            serif: ['Georgia', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A0F1D;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E293B;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #C8102E;
+    }
+
+    .glass-panel {
+      background: rgba(19, 27, 46, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.95); }
+    }
+    .live-dot {
+      animation: pulse-live 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-nba-dark text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-nba-red selection:text-white">
+
+  <!-- ================= TOP TICKER & HEADER ================= -->
+  <header class="border-b border-nba-border bg-nba-dark/95 backdrop-blur sticky top-0 z-40">
+    <!-- Live Score Ticker Bar -->
+    <div class="bg-[#070A14] border-b border-nba-border/60 px-4 py-2 overflow-x-auto whitespace-nowrap flex items-center gap-4 text-xs font-mono">
+      <div class="flex items-center gap-2 font-bold text-nba-red shrink-0 uppercase tracking-widest text-[11px]">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-nba-red live-dot"></span>
+        NBA LIVE TICKER:
+      </div>
+      <div id="ticker-games" class="flex items-center gap-6 text-slate-300">
+        <span class="text-slate-500 italic">Syncing live scoreboard feeds...</span>
+      </div>
+    </div>
+
+    <!-- Main Navigation & Branding -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-nba-navy via-[#1D428A] to-nba-red flex items-center justify-center shadow-lg shadow-nba-navy/20 border border-white/10">
+            <i data-lucide="flame" class="w-6 h-6 text-amber-400"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight uppercase flex items-center gap-2">
+              HOOP <span class="text-nba-red">HEADZ</span> CENTRAL
+            </h1>
+            <p class="text-[11px] text-slate-400 font-mono tracking-wider uppercase">
+              Pro Basketball Intelligence & Daily Ledger
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Date & Quick Actions Bar -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex items-center bg-nba-card border border-nba-border rounded-xl p-1 shadow-inner">
+          <button id="btn-prev-day" class="p-2 hover:bg-white/5 rounded-lg text-slate-300 hover:text-white transition" title="Previous Day">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <input type="date" id="date-picker" class="bg-transparent text-xs font-mono font-semibold text-amber-400 px-3 focus:outline-none cursor-pointer">
+          <button id="btn-next-day" class="p-2 hover:bg-white/5 rounded-lg text-slate-300 hover:text-white transition" title="Next Day">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <button id="btn-yesterday" class="px-3 py-2 bg-nba-card border border-nba-border hover:border-slate-600 text-slate-300 hover:text-white rounded-xl text-xs font-semibold tracking-wider uppercase transition font-mono shadow">
+          Yesterday
+        </button>
+
+        <button id="btn-today" class="px-3.5 py-2 bg-nba-navy/30 border border-nba-navy text-blue-400 hover:bg-nba-navy hover:text-white rounded-xl text-xs font-semibold tracking-wider uppercase transition font-mono shadow">
+          Today
+        </button>
+
+        <button id="btn-refresh" class="p-2.5 bg-nba-card border border-nba-border hover:border-slate-600 text-slate-300 hover:text-white rounded-xl transition shadow" title="Refresh Data">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 flex gap-2 border-t border-nba-border/80 overflow-x-auto text-xs font-semibold pt-1">
+      <button data-tab="tab-scoreboard" class="tab-btn active px-4 py-3 border-b-2 border-nba-red text-white flex items-center gap-2 transition">
+        <i data-lucide="layout-grid" class="w-4 h-4 text-nba-red"></i> Scoreboard & Matchups
+      </button>
+      <button data-tab="tab-news" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i data-lucide="newspaper" class="w-4 h-4 text-amber-400"></i> News & Beat Wire
+      </button>
+      <button data-tab="tab-standings" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 transition">
+        <i data-lucide="list-ordered" class="w-4 h-4 text-blue-400"></i> Conference Standings
+      </button>
+    </nav>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full space-y-6">
+
+    <!-- Status Notice Banner -->
+    <div id="status-banner" class="hidden rounded-xl p-3.5 text-xs flex items-center justify-between border shadow-lg">
+      <div id="status-message" class="flex items-center gap-2 font-mono"></div>
+      <button id="btn-close-status" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+
+    <!-- TAB 1: SCOREBOARD & GAMES -->
+    <section id="tab-scoreboard" class="tab-content space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-nba-border pb-4">
+        <div>
+          <h2 class="text-xl font-bold font-serif text-slate-100 flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-nba-red"></i>
+            Daily NBA Scoreboard Ledger
+          </h2>
+          <p id="current-date-heading" class="text-xs font-mono text-slate-400 mt-0.5">Loading schedule...</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-mono">
+          <span class="px-3 py-1.5 rounded-lg bg-nba-card border border-nba-border text-slate-300 shadow" id="game-count-badge">0 Games</span>
+        </div>
+      </div>
+
+      <!-- Games Grid -->
+      <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Skeleton Loaders -->
+        <div class="glass-panel rounded-2xl p-5 animate-pulse h-52"></div>
+        <div class="glass-panel rounded-2xl p-5 animate-pulse h-52"></div>
+        <div class="glass-panel rounded-2xl p-5 animate-pulse h-52"></div>
+      </div>
+
+      <!-- Stat Leaders & Injury Desk Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        
+        <!-- Daily Stat Leaders -->
+        <div class="glass-panel rounded-2xl p-6 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between border-b border-nba-border pb-3">
+            <h3 class="text-base font-bold font-serif text-slate-100 flex items-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+              Daily Stat Leaders Spotlight
+            </h3>
+            <span class="text-[10px] font-mono uppercase bg-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full border border-amber-500/20">Official ESPN Data</span>
+          </div>
+          <div id="leaders-container" class="space-y-3 min-h-[180px]">
+            <p class="text-xs text-slate-500 font-mono italic">Select a date with completed or live games to load top performers.</p>
+          </div>
+        </div>
+
+        <!-- Injury & Status Report Desk (Strictly Medical) -->
+        <div class="glass-panel rounded-2xl p-6 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between border-b border-nba-border pb-3">
+            <h3 class="text-base font-bold font-serif text-slate-100 flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-nba-red"></i>
+              Medical Injury Desk (True Status Wire)
+            </h3>
+            <span class="text-[10px] font-mono uppercase bg-nba-red/10 text-red-400 px-2.5 py-0.5 rounded-full border border-nba-red/20">Filtered Medical Wire</span>
+          </div>
+          <div id="injury-container" class="space-y-3 min-h-[180px] max-h-[300px] overflow-y-auto pr-1">
+            <p class="text-xs text-slate-500 font-mono italic">Scanning medical player status reports...</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: NEWS & BEAT REPORTS -->
+    <section id="tab-news" class="tab-content hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-nba-border pb-4">
+        <div>
+          <h2 class="text-xl font-bold font-serif text-slate-100 flex items-center gap-2">
+            <i data-lucide="rss" class="w-5 h-5 text-amber-400"></i>
+            Multi-Source NBA News & Beat Wire
+          </h2>
+          <p class="text-xs font-mono text-slate-400 mt-0.5">Aggregated live from ESPN, The Athletic, CBS Sports & Beat Outlets</p>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input type="text" id="news-search-input" placeholder="Search headline, player, team..." class="bg-nba-card border border-nba-border text-xs rounded-xl pl-8 pr-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-nba-red w-48 sm:w-64 shadow-inner">
+          </div>
+          <select id="news-category-filter" class="bg-nba-card border border-nba-border text-xs rounded-xl px-3 py-2 text-slate-300 focus:outline-none focus:border-nba-red shadow-inner">
+            <option value="ALL">All Categories</option>
+            <option value="Trades">Trades & Rumors</option>
+            <option value="Injuries">Injuries</option>
+            <option value="Recaps">Game Recaps</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Articles Grid -->
+      <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="glass-panel rounded-2xl p-5 animate-pulse h-64"></div>
+        <div class="glass-panel rounded-2xl p-5 animate-pulse h-64"></div>
+        <div class="glass-panel rounded-2xl p-5 animate-pulse h-64"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: STANDINGS -->
+    <section id="tab-standings" class="tab-content hidden space-y-6">
+      <div class="flex items-center justify-between border-b border-nba-border pb-4">
+        <div>
+          <h2 class="text-xl font-bold font-serif text-slate-100 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-400"></i>
+            NBA Conference Standings
+          </h2>
+          <p class="text-xs font-mono text-slate-400 mt-0.5">Live standings with playoff seedings & tie-breakers</p>
+        </div>
+        <button id="btn-reload-standings" class="text-xs font-mono text-blue-400 hover:underline flex items-center gap-1.5 bg-nba-card px-3 py-1.5 rounded-xl border border-nba-border shadow">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Sync Standings
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Eastern Conference -->
+        <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+          <div class="bg-gradient-to-r from-blue-950/80 to-nba-card px-5 py-3.5 border-b border-nba-border flex items-center justify-between">
+            <h3 class="font-bold text-sm text-blue-400 uppercase tracking-wider flex items-center gap-2 font-serif">
+              Eastern Conference
+            </h3>
+            <span class="text-[10px] font-mono text-slate-400 uppercase bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Top 10 Playoff / Play-In</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-nba-dark/90 text-slate-400 uppercase border-b border-nba-border text-[10px]">
+                <tr>
+                  <th class="py-3 px-4"># Team</th>
+                  <th class="py-3 px-2 text-center">W</th>
+                  <th class="py-3 px-2 text-center">L</th>
+                  <th class="py-3 px-2 text-center">PCT</th>
+                  <th class="py-3 px-2 text-center">GB</th>
+                  <th class="py-3 px-2 text-center hidden sm:table-cell">L10</th>
+                  <th class="py-3 px-2 text-center hidden sm:table-cell">STRK</th>
+                </tr>
+              </thead>
+              <tbody id="east-standings-body" class="divide-y divide-nba-border/40">
+                <tr><td colspan="7" class="p-6 text-center text-slate-500 italic">Loading East Standings...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Western Conference -->
+        <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+          <div class="bg-gradient-to-r from-red-950/80 to-nba-card px-5 py-3.5 border-b border-nba-border flex items-center justify-between">
+            <h3 class="font-bold text-sm text-red-400 uppercase tracking-wider flex items-center gap-2 font-serif">
+              Western Conference
+            </h3>
+            <span class="text-[10px] font-mono text-slate-400 uppercase bg-nba-red/10 px-2 py-0.5 rounded border border-nba-red/20">Top 10 Playoff / Play-In</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-nba-dark/90 text-slate-400 uppercase border-b border-nba-border text-[10px]">
+                <tr>
+                  <th class="py-3 px-4"># Team</th>
+                  <th class="py-3 px-2 text-center">W</th>
+                  <th class="py-3 px-2 text-center">L</th>
+                  <th class="py-3 px-2 text-center">PCT</th>
+                  <th class="py-3 px-2 text-center">GB</th>
+                  <th class="py-3 px-2 text-center hidden sm:table-cell">L10</th>
+                  <th class="py-3 px-2 text-center hidden sm:table-cell">STRK</th>
+                </tr>
+              </thead>
+              <tbody id="west-standings-body" class="divide-y divide-nba-border/40">
+                <tr><td colspan="7" class="p-6 text-center text-slate-500 italic">Loading West Standings...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-nba-border bg-[#070A14] py-8 px-4 text-center text-xs font-mono text-slate-500 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2 text-slate-300 font-serif">
+        <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+        <span class="font-bold text-white uppercase tracking-wider">HOOP HEADZ CENTRAL</span> &copy; <span id="current-year">2026</span>
+      </div>
+      <p class="text-slate-500">Live NBA Data powered by Official ESPN APIs & CDN Team Assets.</p>
+    </div>
+  </footer>
+
+  <!-- ================= GAME BOXSCORE MODAL ================= -->
+  <div id="boxscore-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel border border-nba-border rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+      <div class="p-4 sm:p-5 border-b border-nba-border flex items-center justify-between sticky top-0 bg-nba-card z-10">
+        <h3 id="modal-game-title" class="font-serif font-bold text-base sm:text-lg text-slate-100 flex items-center gap-2">
+          <i data-lucide="bar-chart" class="w-5 h-5 text-nba-red"></i> Game Boxscore & Player Statistics
+        </h3>
+        <button id="btn-close-modal" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-content" class="p-6 space-y-6">
+        <p class="text-slate-400 italic font-mono text-xs">Loading game box score...</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= APPLICATION JAVASCRIPT ================= -->
+  <script>
+    // Global Application State
+    const state = {
+      selectedDate: new Date(),
+      currentTab: 'tab-scoreboard',
+      games: [],
+      news: [],
+      standings: { east: [], west: [] },
+      rawNewsData: []
+    };
+
+    // Helper: Format Date into YYYYMMDD for ESPN API
+    function formatDateForESPN(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}${m}${d}`;
+    }
+
+    // Helper: Format Date into YYYY-MM-DD for Input Picker
+    function formatDateForInput(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    // Helper: Format Date for Display Header
+    function formatDateDisplay(dateObj) {
+      return dateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+
+    // UI Notice Banner
+    function showStatus(message, type = 'info') {
+      const banner = document.getElementById('status-banner');
+      const msg = document.getElementById('status-message');
+      banner.classList.remove('hidden', 'bg-amber-500/10', 'border-amber-500/30', 'text-amber-400', 'bg-red-500/10', 'border-red-500/30', 'text-red-400');
+      
+      if (type === 'error') {
+        banner.classList.add('bg-red-500/10', 'border-red-500/30', 'text-red-400');
+      } else {
+        banner.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-400');
+      }
+
+      msg.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'info'}" class="w-4 h-4"></i> ${message}`;
+      banner.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    // ================= 1. FETCH ESPN LIVE SCOREBOARD =================
+    async function fetchScoreboard(dateObj) {
+      const dateStr = formatDateForESPN(dateObj);
+      const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
+      
+      const gamesGrid = document.getElementById('games-grid');
+      const gameCountBadge = document.getElementById('game-count-badge');
+      const leadersContainer = document.getElementById('leaders-container');
+      const injuryContainer = document.getElementById('injury-container');
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+        const data = await response.json();
+
+        state.games = data.events || [];
+        gameCountBadge.textContent = `${state.games.length} Game${state.games.length === 1 ? '' : 's'}`;
+
+        renderTicker(state.games);
+
+        if (state.games.length === 0) {
+          gamesGrid.innerHTML = `
+            <div class="col-span-full glass-panel rounded-2xl p-10 text-center space-y-3">
+              <i data-lucide="calendar-x" class="w-10 h-10 text-slate-500 mx-auto"></i>
+              <p class="text-sm text-slate-200 font-serif font-bold">No NBA Games Scheduled for ${formatDateDisplay(dateObj)}</p>
+              <p class="text-xs text-slate-400 font-mono">Use the date picker in the header to jump to active game dates.</p>
+            </div>
+          `;
+          leadersContainer.innerHTML = `<p class="text-xs text-slate-500 font-mono italic">No games or statistics available for this date.</p>`;
+          injuryContainer.innerHTML = `<p class="text-xs text-slate-500 font-mono italic">No medical reports for this date.</p>`;
+          lucide.createIcons();
+          return;
+        }
+
+        gamesGrid.innerHTML = state.games.map(game => createGameCardHTML(game)).join('');
+        renderDailyLeaders(state.games);
+        renderInjuryDesk(state.games);
+
+        lucide.createIcons();
+
+      } catch (err) {
+        console.error("Scoreboard fetch error:", err);
+        showStatus(`Unable to load live ESPN scoreboard: ${err.message}`, 'error');
+        gamesGrid.innerHTML = `
+          <div class="col-span-full glass-panel rounded-2xl p-6 text-center text-red-400 text-xs font-mono">
+            Error loading game data. Please check network connectivity or refresh.
+          </div>
+        `;
+      }
+    }
+
+    // Build Single Game Card with Official CDN Logo
+    function createGameCardHTML(game) {
+      const competition = game.competitions?.[0] || {};
+      const status = game.status?.type || {};
+      const competitors = competition.competitors || [];
+      
+      const home = competitors.find(c => c.homeAway === 'home') || {};
+      const away = competitors.find(c => c.homeAway === 'away') || {};
+
+      const isLive = status.state === 'in';
+      const isFinal = status.state === 'post';
+      
+      const statusText = isLive 
+        ? `<span class="text-nba-red font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-nba-red live-dot"></span> Q${game.status.period} - ${game.status.displayClock}</span>` 
+        : isFinal 
+        ? `<span class="text-slate-400 font-bold tracking-wider">FINAL</span>` 
+        : `<span class="text-amber-400 font-medium">${game.status.type?.shortDetail || 'Upcoming'}</span>`;
+
+      const leaders = competition.leaders || [];
+      let leadersHTML = '';
+      if (leaders.length > 0) {
+        const topLeader = leaders[0]?.leaders?.[0];
+        if (topLeader) {
+          leadersHTML = `
+            <div class="mt-3.5 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-400">
+              <span class="truncate"><strong class="text-slate-200">${topLeader.athlete?.displayName || 'Leader'}:</strong> ${topLeader.displayValue || ''}</span>
+              <span class="text-[10px] text-amber-400/90 uppercase tracking-wider shrink-0">${leaders[0].displayName || 'Stats'}</span>
+            </div>
+          `;
+        }
+      }
+
+      return `
+        <div class="glass-panel border border-nba-border hover:border-slate-600 rounded-2xl p-5 transition shadow-lg flex flex-col justify-between group">
+          <div>
+            <div class="flex items-center justify-between text-xs font-mono border-b border-white/5 pb-2.5 mb-3.5">
+              <span class="text-slate-400 truncate max-w-[170px]">${competition.venue?.fullName || 'NBA Arena'}</span>
+              ${statusText}
+            </div>
+
+            <div class="space-y-3">
+              <!-- Away Team -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <img src="${away.team?.logo || 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/nba.png'}" class="w-9 h-9 object-contain" alt="${away.team?.displayName}" onerror="this.src='https://placehold.co/100x100/131b2e/ffffff?text=NBA'">
+                  <div>
+                    <h4 class="font-bold text-sm text-slate-100">${away.team?.displayName || 'Away Team'}</h4>
+                    <span class="text-[10px] text-slate-400 font-mono">${away.records?.[0]?.summary || ''}</span>
+                  </div>
+                </div>
+                <span class="text-lg font-bold font-mono ${away.winner ? 'text-amber-400' : 'text-slate-200'}">${away.score || '0'}</span>
+              </div>
+
+              <!-- Home Team -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <img src="${home.team?.logo || 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/nba.png'}" class="w-9 h-9 object-contain" alt="${home.team?.displayName}" onerror="this.src='https://placehold.co/100x100/131b2e/ffffff?text=NBA'">
+                  <div>
+                    <h4 class="font-bold text-sm text-slate-100">${home.team?.displayName || 'Home Team'}</h4>
+                    <span class="text-[10px] text-slate-400 font-mono">${home.records?.[0]?.summary || ''}</span>
+                  </div>
+                </div>
+                <span class="text-lg font-bold font-mono ${home.winner ? 'text-amber-400' : 'text-slate-200'}">${home.score || '0'}</span>
+              </div>
+            </div>
+            ${leadersHTML}
+          </div>
+
+          <button onclick="openGameBoxscore('${game.id}')" class="mt-4 w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-200 rounded-xl transition flex items-center justify-center gap-2 group-hover:border-nba-red/50 cursor-pointer">
+            <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-nba-red"></i> View Interactive Box Score
+          </button>
+        </div>
+      `;
+    }
+
+    // Render Ticker
+    function renderTicker(games) {
+      const tickerGames = document.getElementById('ticker-games');
+      if (!games || games.length === 0) {
+        tickerGames.innerHTML = `<span class="text-slate-500 italic">No games scheduled for this date</span>`;
+        return;
+      }
+
+      tickerGames.innerHTML = games.map(g => {
+        const comp = g.competitions?.[0] || {};
+        const away = comp.competitors?.find(c => c.homeAway === 'away') || {};
+        const home = comp.competitors?.find(c => c.homeAway === 'home') || {};
+        const state = g.status?.type?.state;
+        const isLive = state === 'in';
+
+        return `
+          <div class="inline-flex items-center gap-2 font-mono hover:text-white cursor-pointer" onclick="openGameBoxscore('${g.id}')">
+            <span class="font-bold text-slate-200">${away.team?.abbreviation || 'AWY'} ${away.score || 0}</span>
+            <span class="text-slate-600">@</span>
+            <span class="font-bold text-slate-200">${home.team?.abbreviation || 'HOM'} ${home.score || 0}</span>
+            <span class="${isLive ? 'text-nba-red font-bold' : 'text-slate-400'} text-[10px]">(${g.status?.type?.shortDetail || ''})</span>
+          </div>
+        `;
+      }).join('<span class="text-slate-700">|</span>');
+    }
+
+    // Daily Stat Leaders
+    function renderDailyLeaders(games) {
+      const container = document.getElementById('leaders-container');
+      const leadersList = [];
+
+      games.forEach(g => {
+        const comp = g.competitions?.[0] || {};
+        const leadersArr = comp.leaders || [];
+        leadersArr.forEach(cat => {
+          const topA = cat.leaders?.[0];
+          if (topA && topA.athlete) {
+            leadersList.push({
+              category: cat.displayName,
+              athlete: topA.athlete.displayName,
+              team: topA.athlete.team?.abbreviation || '',
+              stat: topA.displayValue,
+              headshot: topA.athlete.headshot || 'https://a.espncdn.com/combiner/i?img=/i/headshots/nba/players/full/3975.png&w=96&h=70'
+            });
+          }
+        });
+      });
+
+      if (leadersList.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 font-mono italic">Stats populate automatically as games progress.</p>`;
+        return;
+      }
+
+      container.innerHTML = leadersList.slice(0, 4).map(l => `
+        <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+          <div class="flex items-center gap-3">
+            <img src="${l.headshot}" class="w-10 h-10 rounded-xl bg-slate-900 object-cover border border-white/10" alt="${l.athlete}" onerror="this.src='https://placehold.co/100x100/131b2e/ffffff?text=NBA'">
+            <div>
+              <h5 class="text-xs font-bold text-slate-100">${l.athlete} <span class="text-[10px] text-slate-400 font-mono">(${l.team})</span></h5>
+              <span class="text-[10px] font-mono text-amber-400 uppercase tracking-wide">${l.category}</span>
+            </div>
+          </div>
+          <span class="font-mono text-sm font-bold text-slate-100 bg-black/30 px-3 py-1 rounded-lg border border-white/5">${l.stat}</span>
+        </div>
+      `).join('');
+    }
+
+    // Strictly Medical Injury Desk (Filters out non-injury news)
+    function renderInjuryDesk(games) {
+      const container = document.getElementById('injury-container');
+      const medicalReports = [];
+
+      games.forEach(g => {
+        const headlines = g.competitions?.[0]?.headlines || [];
+        headlines.forEach(h => {
+          const text = (h.description || '').toLowerCase();
+          const title = (h.shortLinkText || h.description || '').toLowerCase();
+          
+          // Strict medical keywords check
+          const isMedical = text.includes('out') || text.includes('injury') || text.includes('injured') || text.includes('questionable') || 
+                            text.includes('probable') || text.includes('doubtful') || text.includes('sprain') || text.includes('surgery') || 
+                            text.includes('soreness') || text.includes('concussion') || text.includes('strain') || text.includes('fracture') ||
+                            title.includes('injury') || title.includes('out') || title.includes('questionable');
+
+          // Exclude trades, contract extensions, general recaps
+          const isTradeOrNonMedical = text.includes('trade') || text.includes('extension') || text.includes('signed') || text.includes('waived') || text.includes('contract');
+
+          if (isMedical && !isTradeOrNonMedical) {
+            medicalReports.push({
+              title: h.shortLinkText || 'Player Medical Status Update',
+              text: h.description
+            });
+          }
+        });
+      });
+
+      if (medicalReports.length === 0) {
+        container.innerHTML = `
+          <div class="text-xs font-mono text-slate-300 space-y-2 p-2">
+            <p class="text-emerald-400 font-semibold flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4"></i> No active medical injury designations reported for today's match rosters.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = medicalReports.map(n => `
+        <div class="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1">
+          <h5 class="text-xs font-bold text-amber-400 font-mono flex items-center gap-2">
+            <i data-lucide="activity" class="w-3.5 h-3.5 text-nba-red"></i> ${n.title}
+          </h5>
+          <p class="text-xs text-slate-300 leading-relaxed font-serif">${n.text}</p>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+
+    // ================= 2. FETCH STANDINGS =================
+    async function fetchStandings() {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/standings`;
+      const eastBody = document.getElementById('east-standings-body');
+      const westBody = document.getElementById('west-standings-body');
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        const confs = data.children || [];
+        const east = confs.find(c => c.name?.includes('Eastern'))?.standings?.entries || [];
+        const west = confs.find(c => c.name?.includes('Western'))?.standings?.entries || [];
+
+        renderConferenceTable(east, eastBody);
+        renderConferenceTable(west, westBody);
+
+      } catch (err) {
+        console.error("Standings error:", err);
+        eastBody.innerHTML = `<tr><td colspan="7" class="p-4 text-red-400 text-center">Failed loading East standings</td></tr>`;
+        westBody.innerHTML = `<tr><td colspan="7" class="p-4 text-red-400 text-center">Failed loading West standings</td></tr>`;
+      }
+    }
+
+    function renderConferenceTable(entries, container) {
+      if (!entries || entries.length === 0) {
+        container.innerHTML = `<tr><td colspan="7" class="p-4 text-slate-500 text-center">No standings data available</td></tr>`;
+        return;
+      }
+
+      container.innerHTML = entries.map((e, idx) => {
+        const team = e.team || {};
+        const stats = e.stats || [];
+        const getStat = (name) => stats.find(s => s.name === name)?.displayValue || '-';
+
+        const wins = getStat('wins');
+        const losses = getStat('losses');
+        const winPct = getStat('winPercent');
+        const gb = getStat('gamesBehind');
+        const l10 = getStat('L10') || getStat('lastTen');
+        const streak = getStat('streak');
+
+        let borderHighlight = '';
+        if (idx < 6) borderHighlight = 'border-l-2 border-emerald-500';
+        else if (idx < 10) borderHighlight = 'border-l-2 border-amber-500';
+
+        return `
+          <tr class="hover:bg-white/5 transition ${borderHighlight}">
+            <td class="py-3 px-4 font-semibold text-slate-100 flex items-center gap-2.5">
+              <span class="text-slate-400 text-[11px] w-4">${idx + 1}</span>
+              <img src="${team.logos?.[0]?.href || ''}" class="w-6 h-6 object-contain" alt="" onerror="this.src='https://placehold.co/50x50/131b2e/ffffff?text=NBA'">
+              <span class="truncate max-w-[130px] sm:max-w-[170px]">${team.displayName}</span>
+            </td>
+            <td class="py-3 px-2 text-center text-slate-100 font-bold">${wins}</td>
+            <td class="py-3 px-2 text-center text-slate-400">${losses}</td>
+            <td class="py-3 px-2 text-center text-slate-300">${winPct}</td>
+            <td class="py-3 px-2 text-center text-slate-400">${gb}</td>
+            <td class="py-3 px-2 text-center text-slate-400 hidden sm:table-cell">${l10}</td>
+            <td class="py-3 px-2 text-center text-amber-400 font-semibold hidden sm:table-cell">${streak}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+
+    // ================= 3. FETCH MULTI-SOURCE NEWS =================
+    async function fetchNews() {
+      const newsGrid = document.getElementById('news-grid');
+      const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        state.rawNewsData = data.articles || [];
+        renderArticles(state.rawNewsData);
+
+      } catch (err) {
+        console.error("News error:", err);
+        newsGrid.innerHTML = `
+          <div class="col-span-full glass-panel rounded-2xl p-6 text-center text-red-400 font-mono text-xs">
+            Unable to fetch live NBA news wire.
+          </div>
+        `;
+      }
+    }
+
+    function renderArticles(articles) {
+      const newsGrid = document.getElementById('news-grid');
+      const searchTerm = document.getElementById('news-search-input').value.toLowerCase();
+      const catFilter = document.getElementById('news-category-filter').value;
+
+      let filtered = articles.filter(a => {
+        const title = (a.headline || '').toLowerCase();
+        const desc = (a.description || '').toLowerCase();
+        const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
+        
+        let matchesCat = true;
+        if (catFilter === 'Trades') matchesCat = title.includes('trade') || title.includes('deal') || title.includes('sign');
+        if (catFilter === 'Injuries') matchesCat = title.includes('injur') || title.includes('out') || title.includes('surgery');
+        if (catFilter === 'Recaps') matchesCat = title.includes('recap') || title.includes('win') || title.includes('defeat');
+
+        return matchesSearch && matchesCat;
+      });
+
+      if (filtered.length === 0) {
+        newsGrid.innerHTML = `
+          <div class="col-span-full glass-panel rounded-2xl p-10 text-center text-slate-400 font-mono text-xs">
+            No articles match your current filter.
+          </div>
+        `;
+        return;
+      }
+
+      newsGrid.innerHTML = filtered.map(a => {
+        const imgUrl = a.images?.[0]?.url || 'https://a.espncdn.com/i/espn/misc/media/espn_logo.png';
+        const dateStr = a.published ? new Date(a.published).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent';
+
+        return `
+          <article class="glass-panel border border-nba-border hover:border-slate-600 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition group">
+            <div>
+              <div class="relative h-48 overflow-hidden bg-slate-950">
+                <img src="${imgUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="" onerror="this.src='https://placehold.co/600x400/131b2e/ffffff?text=NBA+Wire'">
+                <span class="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-amber-400 border border-amber-400/30 text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg">
+                  ${a.byline || 'ESPN NBA Wire'}
+                </span>
+              </div>
+              <div class="p-5 space-y-2.5">
+                <span class="text-[10px] font-mono text-slate-400">${dateStr}</span>
+                <h3 class="font-bold font-serif text-base text-slate-100 group-hover:text-amber-400 transition leading-snug line-clamp-2">
+                  ${a.headline}
+                </h3>
+                <p class="text-xs text-slate-300 font-sans leading-relaxed line-clamp-3">
+                  ${a.description || ''}
+                </p>
+              </div>
+            </div>
+
+            <div class="p-5 pt-0">
+              <a href="${a.links?.web?.href || '#'}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-mono text-amber-400 hover:text-amber-300 font-semibold pt-3 border-t border-white/5 w-full">
+                Read Full Story <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+
+    // ================= 4. INTERACTIVE BOX SCORE MODAL =================
+    async function openGameBoxscore(gameId) {
+      const modal = document.getElementById('boxscore-modal');
+      const content = document.getElementById('modal-content');
+      modal.classList.remove('hidden');
+
+      content.innerHTML = `<div class="p-10 text-center font-mono text-xs text-amber-400 animate-pulse">Loading interactive box score & player statistics...</div>`;
+
+      try {
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`);
+        if (!res.ok) throw new Error('Box score unavailable');
+        const data = await res.json();
+
+        const header = data.header || {};
+        const competition = header.competitions?.[0] || {};
+        const boxscore = data.boxscore || {};
+        const teamsStats = boxscore.teams || [];
+        const playersStats = boxscore.players || [];
+
+        const teams = competition.competitors || [];
+        const home = teams.find(t => t.homeAway === 'home') || {};
+        const away = teams.find(t => t.homeAway === 'away') || {};
+
+        document.getElementById('modal-game-title').innerHTML = `
+          ${away.team?.displayName || 'Away'} @ ${home.team?.displayName || 'Home'} Box Score
+        `;
+
+        let boxHTML = `
+          <div class="bg-black/40 p-5 rounded-2xl border border-white/5 flex items-center justify-around font-mono">
+            <div class="text-center">
+              <img src="${away.team?.logos?.[0]?.href || ''}" class="w-12 h-12 mx-auto mb-1.5 object-contain" onerror="this.src='https://placehold.co/60x60/131b2e/ffffff?text=NBA'">
+              <h4 class="font-bold text-slate-100">${away.team?.abbreviation}</h4>
+              <span class="text-2xl font-extrabold text-amber-400">${away.score || '0'}</span>
+            </div>
+            <div class="text-center text-xs text-slate-400 space-y-1">
+              <span class="font-bold text-slate-200">${competition.status?.type?.shortDetail || 'FINAL'}</span>
+              <div class="text-[10px] text-slate-500">${competition.venue?.fullName || ''}</div>
+            </div>
+            <div class="text-center">
+              <img src="${home.team?.logos?.[0]?.href || ''}" class="w-12 h-12 mx-auto mb-1.5 object-contain" onerror="this.src='https://placehold.co/60x60/131b2e/ffffff?text=NBA'">
+              <h4 class="font-bold text-slate-100">${home.team?.abbreviation}</h4>
+              <span class="text-2xl font-extrabold text-amber-400">${home.score || '0'}</span>
+            </div>
+          </div>
+        `;
+
+        if (data.article?.story) {
+          boxHTML += `
+            <div class="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-2">
+              <h4 class="text-xs font-bold font-mono text-amber-400 uppercase tracking-wider">Game Recap</h4>
+              <p class="text-xs text-slate-300 font-serif leading-relaxed">${data.article.headline} — ${data.article.story.replace(/<[^>]*>?/gm, '')}</p>
+            </div>
+          `;
+        }
+
+        // Render Player Stat Tables
+        if (playersStats.length > 0) {
+          boxHTML += `<div class="space-y-6 pt-2">`;
+          
+          playersStats.forEach(teamGroup => {
+            const teamName = teamGroup.team?.displayName || 'Team';
+            const teamLogo = teamGroup.team?.logo || '';
+            const statistics = teamGroup.statistics || [];
+
+            boxHTML += `
+              <div class="space-y-3">
+                <div class="flex items-center gap-2.5 border-b border-nba-border pb-2">
+                  <img src="${teamLogo}" class="w-6 h-6 object-contain" alt="" onerror="this.src='https://placehold.co/30x30/131b2e/ffffff?text=NBA'">
+                  <h4 class="font-bold font-serif text-sm text-slate-100">${teamName} Player Statistics</h4>
+                </div>
+            `;
+
+            statistics.forEach(statCat => {
+              const athletes = statCat.athletes || [];
+              if (athletes.length === 0) return;
+
+              boxHTML += `
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs font-mono">
+                    <thead class="bg-nba-dark text-slate-400 text-[10px] uppercase border-b border-nba-border">
+                      <tr>
+                        <th class="py-2.5 px-3">Player</th>
+                        <th class="py-2.5 px-2 text-center">MIN</th>
+                        <th class="py-2.5 px-2 text-center font-bold text-amber-400">PTS</th>
+                        <th class="py-2.5 px-2 text-center">REB</th>
+                        <th class="py-2.5 px-2 text-center">AST</th>
+                        <th class="py-2.5 px-2 text-center">FG</th>
+                        <th class="py-2.5 px-2 text-center">3PT</th>
+                        <th class="py-2.5 px-2 text-center">FT</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-nba-border/40">
+              `;
+
+              athletes.forEach(item => {
+                const athlete = item.athlete || {};
+                const stats = item.stats || [];
+                // ESPN stats order typically: MIN, FG, 3PT, FT, REB, AST, STL, BLK, TO, PF, PTS (+/-)
+                const getVal = (idx) => stats[idx] || '0';
+                
+                const min = getVal(0);
+                const fg = getVal(1);
+                const threePt = getVal(2);
+                const ft = getVal(3);
+                const reb = getVal(4);
+                const ast = getVal(5);
+                const pts = getVal(stats.length - 2 >= 0 ? stats.length - 2 : stats.length - 1);
+
+                boxHTML += `
+                  <tr class="hover:bg-white/5 transition">
+                    <td class="py-2 px-3 font-semibold text-slate-200 truncate max-w-[150px]">${athlete.displayName || 'Player'} <span class="text-[10px] text-slate-400 font-normal">${athlete.position?.abbreviation || ''}</span></td>
+                    <td class="py-2 px-2 text-center text-slate-400">${min}</td>
+                    <td class="py-2 px-2 text-center font-bold text-amber-400">${pts}</td>
+                    <td class="py-2 px-2 text-center text-slate-200">${reb}</td>
+                    <td class="py-2 px-2 text-center text-slate-200">${ast}</td>
+                    <td class="py-2 px-2 text-center text-slate-400">${fg}</td>
+                    <td class="py-2 px-2 text-center text-slate-400">${threePt}</td>
+                    <td class="py-2 px-2 text-center text-slate-400">${ft}</td>
+                  </tr>
+                `;
+              });
+
+              boxHTML += `
+                    </tbody>
+                  </table>
+                </div>
+              `;
+            });
+
+            boxHTML += `</div>`;
+          });
+
+          boxHTML += `</div>`;
+        }
+
+        content.innerHTML = boxHTML;
+
+      } catch (e) {
+        console.error(e);
+        content.innerHTML = `<p class="text-center text-xs font-mono text-red-400 p-6">Detailed box score and player statistics are currently unavailable for this game.</p>`;
+      }
+    }
+
+
+    // ================= 5. EVENT LISTENERS & INIT =================
+    function switchTab(tabId) {
+      state.currentTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabId) {
+          btn.classList.add('active', 'border-nba-red', 'text-white');
+          btn.classList.remove('border-transparent', 'text-slate-400');
+        } else {
+          btn.classList.remove('active', 'border-nba-red', 'text-white');
+          btn.classList.add('border-transparent', 'text-slate-400');
+        }
+      });
+
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('hidden', content.id !== tabId);
+      });
+
+      if (tabId === 'tab-standings' && state.standings.east.length === 0) {
+        fetchStandings();
+      }
+    }
+
+    function onDateChanged() {
+      const dateHeading = document.getElementById('current-date-heading');
+      dateHeading.textContent = formatDateDisplay(state.selectedDate);
+      fetchScoreboard(state.selectedDate);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+
+      const datePicker = document.getElementById('date-picker');
+      datePicker.value = formatDateForInput(state.selectedDate);
+      document.getElementById('current-date-heading').textContent = formatDateDisplay(state.selectedDate);
+
+      datePicker.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        const [y, m, d] = e.target.value.split('-');
+        state.selectedDate = new Date(y, m - 1, d);
+        onDateChanged();
+      });
+
+      document.getElementById('btn-prev-day').addEventListener('click', () => {
+        state.selectedDate.setDate(state.selectedDate.getDate() - 1);
+        datePicker.value = formatDateForInput(state.selectedDate);
+        onDateChanged();
+      });
+
+      document.getElementById('btn-next-day').addEventListener('click', () => {
+        state.selectedDate.setDate(state.selectedDate.getDate() + 1);
+        datePicker.value = formatDateForInput(state.selectedDate);
+        onDateChanged();
+      });
+
+      document.getElementById('btn-yesterday').addEventListener('click', () => {
+        const yest = new Date();
+        yest.setDate(yest.getDate() - 1);
+        state.selectedDate = yest;
+        datePicker.value = formatDateForInput(state.selectedDate);
+        onDateChanged();
+      });
+
+      document.getElementById('btn-today').addEventListener('click', () => {
+        state.selectedDate = new Date();
+        datePicker.value = formatDateForInput(state.selectedDate);
+        onDateChanged();
+      });
+
+      document.getElementById('btn-refresh').addEventListener('click', () => {
+        showStatus('Refreshing live NBA data feeds...', 'info');
+        fetchScoreboard(state.selectedDate);
+        fetchNews();
+        fetchStandings();
+      });
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      document.getElementById('news-search-input').addEventListener('input', () => renderArticles(state.rawNewsData));
+      document.getElementById('news-category-filter').addEventListener('change', () => renderArticles(state.rawNewsData));
+      document.getElementById('btn-reload-standings').addEventListener('click', fetchStandings);
+
+      document.getElementById('btn-close-modal').addEventListener('click', () => {
+        document.getElementById('boxscore-modal').classList.add('hidden');
+      });
+
+      document.getElementById('btn-close-status').addEventListener('click', () => {
+        document.getElementById('status-banner').classList.add('hidden');
+      });
+
+      // Initial Load
+      fetchScoreboard(state.selectedDate);
+      fetchNews();
+    });
+  </script>
+</body>
+</html>
